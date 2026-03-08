@@ -1,0 +1,4 @@
+pyvips
+pyvips-binary
+dropbox
+python-dotenv

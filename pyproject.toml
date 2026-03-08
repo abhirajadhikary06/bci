@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zipzap"
+version = "0.1.0.post1"
+description = "Fast batch image compression for Dropbox, folders and ZIP files using zipzap"
+authors = [
+    {name = "Abhiraj Adhikary"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    "pyvips",
+    "pyvips-binary",
+    "dropbox",
+    "python-dotenv"
+]
+
+[project.scripts]
+zipzap = "zipzap.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
