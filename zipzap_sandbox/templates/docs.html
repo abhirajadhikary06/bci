@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zipzap Docs — Fast Batch Image Compression</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #ff5a00;
+      --orange-dim: #cc4800;
+      --orange-glow: rgba(255, 90, 0, 0.15);
+      --black: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ece6;
+      --muted: #7a7068;
+      --mono: 'DM Mono', monospace;
+      --display: 'Syne', sans-serif;
+      --serif: 'Instrument Serif', serif;
+      --sidebar-width: 260px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: var(--display);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* CURSOR */
+    .cursor {
+      position: fixed; width: 12px; height: 12px;
+      background: var(--orange); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transition: transform 0.15s ease;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-ring {
+      position: fixed; width: 36px; height: 36px;
+      border: 1.5px solid var(--orange); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transition: transform 0.35s cubic-bezier(.25,.46,.45,.94);
+      transform: translate(-50%, -50%); opacity: 0.5;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 64px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.9); backdrop-filter: blur(16px);
+    }
+    .nav-left { display: flex; align-items: center; gap: 24px; }
+    .nav-logo {
+      font-family: var(--display); font-weight: 800; font-size: 20px;
+      color: var(--text); text-decoration: none; letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--orange); }
+    .nav-divider { width: 1px; height: 20px; background: var(--border); }
+    .nav-section-label {
+      font-family: var(--mono); font-size: 12px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--orange); color: #fff !important;
+      padding: 8px 20px; border-radius: 6px;
+      font-weight: 600 !important; transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--orange-dim) !important; }
+
+    /* LAYOUT */
+    .docs-layout {
+      display: flex;
+      padding-top: 64px;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed;
+      top: 64px; left: 0; bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 32px 0;
+      z-index: 50;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .sidebar-group { margin-bottom: 32px; padding: 0 20px; }
+    .sidebar-group-label {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.14em; font-weight: 500;
+      margin-bottom: 10px; padding-left: 12px;
+    }
+    .sidebar-links { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-links a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 12px; border-radius: 7px;
+      font-size: 14px; color: var(--muted);
+      text-decoration: none; font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      position: relative;
+    }
+    .sidebar-links a:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .sidebar-links a.active {
+      background: var(--orange-glow);
+      color: var(--orange);
+    }
+    .sidebar-links a.active::before {
+      content: '';
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 2px; height: 60%; background: var(--orange); border-radius: 0 2px 2px 0;
+    }
+    .sidebar-icon {
+      width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6;
+      filter: invert(1);
+    }
+    .sidebar-links a.active .sidebar-icon { opacity: 1; filter: invert(45%) sepia(90%) saturate(800%) hue-rotate(5deg) brightness(105%); }
+
+    /* MAIN CONTENT */
+    .docs-main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      min-width: 0;
+      display: flex;
+    }
+    .docs-content {
+      flex: 1;
+      max-width: 760px;
+      padding: 64px 60px 120px;
+    }
+
+    /* TOC (right) */
+    .docs-toc {
+      width: 220px;
+      flex-shrink: 0;
+      padding: 64px 0 64px 40px;
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+      border-left: 1px solid var(--border);
+    }
+    .toc-label {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.14em;
+      margin-bottom: 12px;
+    }
+    .toc-links { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .toc-links a {
+      font-size: 13px; color: var(--muted); text-decoration: none;
+      line-height: 1.5; transition: color 0.2s; display: block;
+      padding: 2px 0; border-left: 2px solid transparent;
+      padding-left: 10px;
+    }
+    .toc-links a:hover { color: var(--text); }
+    .toc-links a.active { color: var(--orange); border-left-color: var(--orange); }
+    .toc-links .toc-h3 { padding-left: 20px; font-size: 12px; }
+
+    /* DOCS TYPOGRAPHY */
+    .docs-header { margin-bottom: 56px; padding-bottom: 40px; border-bottom: 1px solid var(--border); }
+    .docs-breadcrumb {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .docs-breadcrumb a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .docs-breadcrumb a:hover { color: var(--text); }
+    .docs-breadcrumb span { opacity: 0.4; }
+
+    .docs-page-title {
+      font-family: var(--display); font-weight: 800;
+      font-size: clamp(36px, 5vw, 52px);
+      letter-spacing: -0.03em; line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .docs-page-title em {
+      font-family: var(--serif); font-style: italic;
+      font-weight: 400; color: var(--orange);
+    }
+    .docs-page-desc {
+      font-size: 17px; color: var(--muted); line-height: 1.7;
+      font-weight: 400; max-width: 600px;
+    }
+
+    /* SECTION */
+    .doc-section {
+      margin-bottom: 72px;
+      scroll-margin-top: 96px;
+    }
+    .doc-section-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 24px;
+    }
+    .doc-section-icon {
+      width: 36px; height: 36px;
+      background: var(--orange-glow);
+      border: 1px solid rgba(255,90,0,0.2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .doc-section-icon img {
+      width: 18px; height: 18px;
+      filter: invert(45%) sepia(90%) saturate(800%) hue-rotate(5deg) brightness(105%);
+    }
+    h2.doc-h2 {
+      font-family: var(--display); font-weight: 800;
+      font-size: 26px; letter-spacing: -0.025em;
+      line-height: 1.2;
+    }
+    h3.doc-h3 {
+      font-family: var(--display); font-weight: 700;
+      font-size: 17px; letter-spacing: -0.01em;
+      margin: 32px 0 12px;
+      scroll-margin-top: 96px;
+    }
+    .doc-section p {
+      font-size: 15px; color: var(--muted); line-height: 1.75;
+      font-weight: 400; margin-bottom: 16px;
+    }
+    .doc-section p:last-child { margin-bottom: 0; }
+
+    /* CALLOUT */
+    .callout {
+      display: flex; gap: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--orange);
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .callout-icon { flex-shrink: 0; margin-top: 1px; }
+    .callout-icon img { width: 16px; height: 16px; filter: invert(45%) sepia(90%) saturate(800%) hue-rotate(5deg) brightness(105%); }
+    .callout p {
+      font-size: 14px; color: var(--muted); line-height: 1.65; margin: 0 !important;
+    }
+    .callout strong { color: var(--text); }
+
+    /* CODE */
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 16px 0;
+      position: relative;
+    }
+    .code-block-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang {
+      font-family: var(--mono); font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .code-copy {
+      font-family: var(--mono); font-size: 11px; color: var(--muted);
+      background: none; border: none; cursor: none;
+      transition: color 0.2s; padding: 2px 6px;
+    }
+    .code-copy:hover { color: var(--text); }
+    .code-block pre {
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-x: auto;
+      color: var(--text);
+    }
+    .code-block pre::-webkit-scrollbar { height: 4px; }
+    .code-block pre::-webkit-scrollbar-track { background: transparent; }
+    .code-block pre::-webkit-scrollbar-thumb { background: var(--border); }
+
+    /* SYNTAX HIGHLIGHT */
+    .kw { color: #c792ea; }
+    .fn { color: #82aaff; }
+    .str { color: #c3e88d; }
+    .cm { color: var(--muted); font-style: italic; }
+    .op { color: #89ddff; }
+    .var { color: #f07178; }
+    .num { color: #f78c6c; }
+
+    /* INLINE CODE */
+    code {
+      font-family: var(--mono); font-size: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--orange);
+    }
+
+    /* STEP LIST */
+    .step-list { list-style: none; display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+    .step-list li {
+      display: flex; gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px; color: var(--muted); line-height: 1.65; font-weight: 400;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num {
+      font-family: var(--mono); font-size: 11px; color: var(--orange);
+      min-width: 24px; padding-top: 2px; font-weight: 500;
+    }
+
+    /* BULLET LIST */
+    .doc-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+    .doc-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--muted); line-height: 1.65; font-weight: 400;
+    }
+    .doc-list li::before { content: '—'; color: var(--orange); flex-shrink: 0; font-family: var(--mono); }
+
+    /* TABLE */
+    .doc-table-wrap { overflow-x: auto; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead tr { border-bottom: 1px solid var(--border); }
+    th {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 10px 16px; text-align: left;
+    }
+    td { padding: 12px 16px; color: var(--muted); border-bottom: 1px solid var(--border); vertical-align: top; }
+    td:first-child { color: var(--text); font-family: var(--mono); font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    /* DIVIDER */
+    .doc-divider { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+
+    /* NAV FOOTER (prev/next) */
+    .doc-nav-footer {
+      display: flex; justify-content: space-between; gap: 16px;
+      margin-top: 64px; padding-top: 40px; border-top: 1px solid var(--border);
+    }
+    .doc-nav-card {
+      flex: 1; max-width: 260px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+      text-decoration: none; transition: border-color 0.2s, transform 0.2s;
+    }
+    .doc-nav-card:hover { border-color: rgba(255,90,0,0.3); transform: translateY(-2px); }
+    .doc-nav-card.next { margin-left: auto; text-align: right; }
+    .doc-nav-label { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .doc-nav-title { font-size: 15px; font-weight: 700; color: var(--text); }
+
+    /* BADGE */
+    .badge {
+      display: inline-flex; align-items: center;
+      font-family: var(--mono); font-size: 11px;
+      padding: 2px 8px; border-radius: 4px;
+      font-weight: 500;
+    }
+    .badge-green { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+    .badge-orange { background: var(--orange-glow); color: var(--orange); border: 1px solid rgba(255,90,0,0.2); }
+    .badge-blue { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+
+    /* MOBILE */
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .sidebar { display: none; }
+      .docs-main { margin-left: 0; }
+      .docs-content { padding: 40px 24px 80px; }
+      .docs-toc { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-left">
+      <a href="{{ url_for('index') }}" class="nav-logo">Zip<span>zap</span></a>
+      <div class="nav-divider"></div>
+      <span class="nav-section-label">Docs</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="{{ url_for('index') }}">Home</a></li>
+      <li><a href="#quickstart">Quickstart</a></li>
+      <li><a href="#cli">CLI</a></li>
+      <li><a href="#api">API</a></li>
+      <li><a href="{{ url_for('index') }}#pricing" class="nav-cta">Get started →</a></li>
+    </ul>
+  </nav>
+
+  <div class="docs-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Getting Started</div>
+        <ul class="sidebar-links">
+          <li>
+            <a href="#quickstart" class="active">
+              <img src="/static/icons/rocket.svg" class="sidebar-icon" alt="">
+              Quickstart
+            </a>
+          </li>
+          <li>
+            <a href="#prerequisite">
+              <img src="/static/icons/key.svg" class="sidebar-icon" alt="">
+              Prerequisite
+            </a>
+          </li>
+          <li>
+            <a href="#install">
+              <img src="/static/icons/terminal.svg" class="sidebar-icon" alt="">
+              Installation
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Reference</div>
+        <ul class="sidebar-links">
+          <li>
+            <a href="#cli">
+              <img src="/static/icons/terminal.svg" class="sidebar-icon" alt="">
+              CLI Reference
+            </a>
+          </li>
+          <li>
+            <a href="#api">
+              <img src="/static/icons/plug.svg" class="sidebar-icon" alt="">
+              API Reference
+            </a>
+          </li>
+          <li>
+            <a href="#python-usage">
+              <img src="/static/icons/code.svg" class="sidebar-icon" alt="">
+              Python Usage
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Integrations</div>
+        <ul class="sidebar-links">
+          <li>
+            <a href="#dropbox">
+              <img src="/static/icons/cloud.svg" class="sidebar-icon" alt="">
+              Dropbox Setup
+            </a>
+          </li>
+          <li>
+            <a href="#notes">
+              <img src="/static/icons/info.svg" class="sidebar-icon" alt="">
+              Notes &amp; Tips
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <div class="docs-main">
+      <article class="docs-content">
+
+        <!-- PAGE HEADER -->
+        <div class="docs-header">
+          <div class="docs-breadcrumb">
+            <a href="{{ url_for('index') }}">Home</a>
+            <span>/</span>
+            <span style="color:var(--text)">Documentation</span>
+          </div>
+          <h1 class="docs-page-title">Zipzap <em>Docs</em></h1>
+          <p class="docs-page-desc">
+            Detailed usage guide for fast batch image compression on local folders,
+            local ZIP archives, and Dropbox.
+          </p>
+        </div>
+
+        <!-- ── QUICKSTART ── -->
+        <section class="doc-section" id="quickstart">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/rocket.svg" alt="">
+            </div>
+            <h2 class="doc-h2">Quickstart</h2>
+          </div>
+
+          <p>Get from zero to your first compressed folder in under two minutes.</p>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-num">01</span>
+              <span>Install Zipzap via pip — requires Python 3.8 or later.</span>
+            </li>
+            <li>
+              <span class="step-num">02</span>
+              <span>If you plan to use Dropbox, add your access token to a <code>.env</code> file in your project root.</span>
+            </li>
+            <li>
+              <span class="step-num">03</span>
+              <span>Run <code>zipzap</code> from the command line and follow the interactive prompts, or call the Python API directly in your scripts.</span>
+            </li>
+            <li>
+              <span class="step-num">04</span>
+              <span>Compressed output lands next to your source — as a folder or a <code>_compressed.zip</code> file.</span>
+            </li>
+          </ol>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="cm"># 1. Install</span>
+pip install zipzap
+
+<span class="cm"># 2. Run the interactive CLI</span>
+zipzap
+
+<span class="cm"># 3. Or compress a folder directly</span>
+zipzap compress ./my-images</pre>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── PREREQUISITE ── -->
+        <section class="doc-section" id="prerequisite">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/key.svg" alt="">
+            </div>
+            <h2 class="doc-h2">Prerequisite</h2>
+          </div>
+
+          <p>
+            Local folder and ZIP compression work out of the box with no configuration.
+            Dropbox support requires an access token.
+          </p>
+
+          <p>
+            Create a <code>.env</code> file at your project root and add your token:
+          </p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">.env</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="var">DROPBOX_ACCESS_TOKEN</span><span class="op">=</span><span class="str">your_dropbox_access_token_here</span></pre>
+          </div>
+
+          <div class="callout">
+            <div class="callout-icon"><img src="/static/icons/info.svg" alt=""></div>
+            <p><strong>Never commit your <code>.env</code> file.</strong> Add it to <code>.gitignore</code> before your first commit to avoid leaking credentials.</p>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── INSTALL ── -->
+        <section class="doc-section" id="install">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/terminal.svg" alt="">
+            </div>
+            <h2 class="doc-h2">Installation</h2>
+          </div>
+
+          <p>Zipzap is distributed on PyPI and supports Python 3.8+.</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>pip install zipzap</pre>
+          </div>
+
+          <p>To upgrade to the latest version:</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>pip install --upgrade zipzap</pre>
+          </div>
+
+          <p>Verify the install:</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>zipzap --version</pre>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── CLI REFERENCE ── -->
+        <section class="doc-section" id="cli">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/terminal.svg" alt="">
+            </div>
+            <h2 class="doc-h2">CLI Reference</h2>
+          </div>
+
+          <p>
+            The <code>zipzap</code> command provides an interactive prompt as well as
+            direct sub-commands for scripting and CI pipelines.
+          </p>
+
+          <h3 class="doc-h3">Interactive mode</h3>
+          <p>Running <code>zipzap</code> with no arguments starts the guided prompt. It walks you through source selection and output options.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>zipzap</pre>
+          </div>
+
+          <h3 class="doc-h3">Compress a local folder</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>zipzap compress ./path/to/images</pre>
+          </div>
+
+          <h3 class="doc-h3">Compress a local ZIP archive</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>zipzap compress ./path/to/images.zip</pre>
+          </div>
+
+          <h3 class="doc-h3">Compress a Dropbox folder</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre>zipzap compress --dropbox /MyFolder</pre>
+          </div>
+
+          <h3 class="doc-h3">Flags</h3>
+          <div class="doc-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Flag</th>
+                  <th>Default</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>--quality</td>
+                  <td><span class="badge badge-blue">85</span></td>
+                  <td>JPEG/WebP compression quality (1–100).</td>
+                </tr>
+                <tr>
+                  <td>--format</td>
+                  <td><span class="badge badge-blue">original</span></td>
+                  <td>Output format: <code>jpeg</code>, <code>png</code>, <code>webp</code>, <code>avif</code>.</td>
+                </tr>
+                <tr>
+                  <td>--out</td>
+                  <td><span class="badge badge-blue">./out</span></td>
+                  <td>Output directory or ZIP path.</td>
+                </tr>
+                <tr>
+                  <td>--recursive</td>
+                  <td><span class="badge badge-green">true</span></td>
+                  <td>Recurse into subdirectories.</td>
+                </tr>
+                <tr>
+                  <td>--watch</td>
+                  <td><span class="badge badge-orange">false</span></td>
+                  <td>Watch the source folder and compress on change.</td>
+                </tr>
+                <tr>
+                  <td>--dropbox</td>
+                  <td>—</td>
+                  <td>Dropbox folder path to compress.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── API REFERENCE ── -->
+        <section class="doc-section" id="api">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/plug.svg" alt="">
+            </div>
+            <h2 class="doc-h2">API Reference</h2>
+          </div>
+
+          <p>
+            The Zipzap Python API gives you full programmatic control — import and
+            call individual functions from your scripts, notebooks, or web app.
+          </p>
+
+          <h3 class="doc-h3" id="api-local-folder">batch_compress_local_folder</h3>
+          <p>Compress all images inside a local directory. Produces a sibling <code>_compressed</code> folder.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> batch_compress_local_folder
+
+batch_compress_local_folder(
+    <span class="str">r"C:\path\to\images"</span>,
+    quality<span class="op">=</span><span class="num">85</span>,          <span class="cm"># optional, default 85</span>
+    out_format<span class="op">=</span><span class="str">"webp"</span>,  <span class="cm"># optional, keeps original format by default</span>
+)</pre>
+          </div>
+
+          <h3 class="doc-h3" id="api-local-zip">batch_compress_local_zip</h3>
+          <p>Compress all images inside a ZIP archive. Output is written as <code>&lt;name&gt;_compressed.zip</code> next to the source.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> batch_compress_local_zip
+
+batch_compress_local_zip(
+    <span class="str">r"C:\path\to\images.zip"</span>,
+    quality<span class="op">=</span><span class="num">80</span>,
+)</pre>
+          </div>
+
+          <h3 class="doc-h3" id="api-dropbox">authenticate_dropbox / batch_compress_dropbox</h3>
+          <p>Authenticate with Dropbox using the token in your <code>.env</code>, then compress a remote folder in-place.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> authenticate_dropbox, batch_compress_dropbox
+
+dbx <span class="op">=</span> authenticate_dropbox()
+batch_compress_dropbox(
+    dbx,
+    folder_path<span class="op">=</span><span class="str">"/Marketing/Assets"</span>,  <span class="cm"># remote Dropbox path</span>
+    quality<span class="op">=</span><span class="num">85</span>,
+)</pre>
+          </div>
+
+          <h3 class="doc-h3">Function reference</h3>
+          <div class="doc-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Function</th>
+                  <th>Returns</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>batch_compress_local_folder</td>
+                  <td><code>None</code></td>
+                  <td>Compresses images in a local directory, writes to <code>_compressed/</code>.</td>
+                </tr>
+                <tr>
+                  <td>batch_compress_local_zip</td>
+                  <td><code>None</code></td>
+                  <td>Compresses images inside a ZIP, outputs <code>_compressed.zip</code>.</td>
+                </tr>
+                <tr>
+                  <td>authenticate_dropbox</td>
+                  <td><code>Dropbox</code></td>
+                  <td>Reads <code>DROPBOX_ACCESS_TOKEN</code> from env and returns a client.</td>
+                </tr>
+                <tr>
+                  <td>batch_compress_dropbox</td>
+                  <td><code>None</code></td>
+                  <td>Downloads, compresses, and re-uploads images in a Dropbox folder.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── PYTHON USAGE ── -->
+        <section class="doc-section" id="python-usage">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/code.svg" alt="">
+            </div>
+            <h2 class="doc-h2">Python Usage</h2>
+          </div>
+
+          <p>
+            Use Zipzap inside any Python script, Django/Flask view, or Jupyter
+            notebook. All three compression modes are available as top-level imports.
+          </p>
+
+          <h3 class="doc-h3">Compress a local folder</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> batch_compress_local_folder
+
+batch_compress_local_folder(<span class="str">r"C:\path\to\images"</span>)</pre>
+          </div>
+
+          <h3 class="doc-h3">Compress a local ZIP</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> batch_compress_local_zip
+
+batch_compress_local_zip(<span class="str">r"C:\path\to\images.zip"</span>)</pre>
+          </div>
+
+          <h3 class="doc-h3">Compress a Dropbox folder</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> authenticate_dropbox, batch_compress_dropbox
+
+dbx <span class="op">=</span> authenticate_dropbox()
+batch_compress_dropbox(dbx)</pre>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── DROPBOX SETUP ── -->
+        <section class="doc-section" id="dropbox">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/cloud.svg" alt="">
+            </div>
+            <h2 class="doc-h2">Dropbox Setup</h2>
+          </div>
+
+          <p>Follow these steps to connect your Dropbox account and start compressing cloud files without downloading them locally first.</p>
+
+          <ol class="step-list">
+            <li>
+              <span class="step-num">01</span>
+              <div>
+                Go to <strong>dropbox.com/developers</strong> and create a new app.
+                Choose <em>Scoped access</em> and <em>Full Dropbox</em> permissions.
+              </div>
+            </li>
+            <li>
+              <span class="step-num">02</span>
+              <div>
+                Under the <em>Permissions</em> tab, enable <code>files.content.read</code>
+                and <code>files.content.write</code>.
+              </div>
+            </li>
+            <li>
+              <span class="step-num">03</span>
+              <div>
+                Under the <em>Settings</em> tab, generate an access token and copy it.
+              </div>
+            </li>
+            <li>
+              <span class="step-num">04</span>
+              <div>
+                Paste the token into your <code>.env</code> file as
+                <code>DROPBOX_ACCESS_TOKEN</code>.
+              </div>
+            </li>
+            <li>
+              <span class="step-num">05</span>
+              <div>Run <code>zipzap compress --dropbox /YourFolder</code> or call <code>batch_compress_dropbox(dbx)</code> from Python.</div>
+            </li>
+          </ol>
+
+          <div class="callout">
+            <div class="callout-icon"><img src="/static/icons/info.svg" alt=""></div>
+            <p><strong>Token expiry:</strong> Short-lived tokens expire after 4 hours. For long-running automation, generate an <strong>offline refresh token</strong> instead via the OAuth2 flow in the Dropbox developer console.</p>
+          </div>
+
+          <h3 class="doc-h3">Full Dropbox example</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">python</span>
+              <button class="code-copy" onclick="copyCode(this)">Copy</button>
+            </div>
+            <pre><span class="kw">from</span> zipzap.main <span class="kw">import</span> authenticate_dropbox, batch_compress_dropbox
+
+<span class="cm"># Reads DROPBOX_ACCESS_TOKEN from .env automatically</span>
+dbx <span class="op">=</span> authenticate_dropbox()
+
+<span class="cm"># Compress everything inside /Marketing/Assets on Dropbox</span>
+batch_compress_dropbox(
+    dbx,
+    folder_path<span class="op">=</span><span class="str">"/Marketing/Assets"</span>,
+    quality<span class="op">=</span><span class="num">85</span>,
+)</pre>
+          </div>
+        </section>
+
+        <hr class="doc-divider">
+
+        <!-- ── NOTES & TIPS ── -->
+        <section class="doc-section" id="notes">
+          <div class="doc-section-header">
+            <div class="doc-section-icon">
+              <img src="/static/icons/info.svg" alt="">
+            </div>
+            <h2 class="doc-h2">Notes &amp; Tips</h2>
+          </div>
+
+          <ul class="doc-list">
+            <li>For ZIP mode, the output file is generated as <code>&lt;name&gt;_compressed.zip</code> next to the source archive.</li>
+            <li>Use raw strings for Windows paths to avoid backslash escaping issues: <code>r"C:\folder\images"</code>.</li>
+            <li>Always keep a backup of production folders before running bulk compression — the operation modifies files in place for Dropbox mode.</li>
+            <li>WebP and AVIF formats yield significantly smaller files than JPEG at equivalent visual quality. Consider using <code>--format webp</code> for web assets.</li>
+            <li>Watch mode (<code>--watch</code>) uses filesystem events and adds near-zero CPU overhead when idle.</li>
+            <li>Zipzap processes images in parallel using all available CPU cores by default.</li>
+          </ul>
+        </section>
+
+        <!-- PREV / NEXT NAV -->
+        <div class="doc-nav-footer">
+          <a href="{{ url_for('index') }}" class="doc-nav-card">
+            <div class="doc-nav-label">← Previous</div>
+            <div class="doc-nav-title">Home</div>
+          </a>
+          <a href="#quickstart" class="doc-nav-card next">
+            <div class="doc-nav-label">Top ↑</div>
+            <div class="doc-nav-title">Back to Quickstart</div>
+          </a>
+        </div>
+
+      </article>
+
+      <!-- RIGHT TOC -->
+      <aside class="docs-toc">
+        <div class="toc-label">On this page</div>
+        <ul class="toc-links" id="tocLinks">
+          <li><a href="#quickstart" class="toc-link active">Quickstart</a></li>
+          <li><a href="#prerequisite" class="toc-link">Prerequisite</a></li>
+          <li><a href="#install" class="toc-link">Installation</a></li>
+          <li><a href="#cli" class="toc-link">CLI Reference</a></li>
+          <li><a href="#api" class="toc-link">API Reference</a></li>
+          <li><a href="#api-local-folder" class="toc-link toc-h3">batch_compress_local_folder</a></li>
+          <li><a href="#api-local-zip" class="toc-link toc-h3">batch_compress_local_zip</a></li>
+          <li><a href="#api-dropbox" class="toc-link toc-h3">authenticate_dropbox</a></li>
+          <li><a href="#python-usage" class="toc-link">Python Usage</a></li>
+          <li><a href="#dropbox" class="toc-link">Dropbox Setup</a></li>
+          <li><a href="#notes" class="toc-link">Notes &amp; Tips</a></li>
+        </ul>
+      </aside>
+    </div>
+
+  </div><!-- /docs-layout -->
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    });
+    (function animate() {
+      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      requestAnimationFrame(animate);
+    })();
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+        ring.style.transform = 'translate(-50%,-50%) scale(1.6)';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+        ring.style.transform = 'translate(-50%,-50%) scale(1)';
+      });
+    });
+
+    // Active sidebar + TOC on scroll
+    const sections = document.querySelectorAll('.doc-section');
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sidebarLinks = document.querySelectorAll('.sidebar-links a');
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+          sidebarLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+
+    // Copy button
+    function copyCode(btn) {
+      const pre = btn.closest('.code-block').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zipzap — Fast Batch Image Compression</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #ff5a00;
+      --orange-dim: #cc4800;
+      --orange-glow: rgba(255, 90, 0, 0.15);
+      --black: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ece6;
+      --muted: #7a7068;
+      --mono: 'DM Mono', monospace;
+      --display: 'Syne', sans-serif;
+      --serif: 'Instrument Serif', serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: var(--display);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed; width: 12px; height: 12px;
+      background: var(--orange); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-ring {
+      position: fixed; width: 36px; height: 36px;
+      border: 1.5px solid var(--orange); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transition: transform 0.35s cubic-bezier(.25,.46,.45,.94), opacity 0.2s;
+      transform: translate(-50%, -50%); opacity: 0.5;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 64px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.85); backdrop-filter: blur(16px);
+    }
+    .nav-logo {
+      font-family: var(--display); font-weight: 800; font-size: 20px;
+      color: var(--text); text-decoration: none; letter-spacing: -0.5px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-logo span { color: var(--orange); }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; letter-spacing: 0.02em; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--orange); color: #fff !important;
+      padding: 8px 20px; border-radius: 6px;
+      font-weight: 600 !important; transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--orange-dim) !important; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: flex-start; justify-content: center;
+      padding: 120px 40px 80px; position: relative; overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 70% 40%, rgba(255,90,0,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 20% 80%, rgba(255,90,0,0.05) 0%, transparent 60%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 100px; padding: 6px 14px;
+      font-family: var(--mono); font-size: 12px; color: var(--muted);
+      margin-bottom: 36px; position: relative; z-index: 1;
+      animation: fadeUp 0.8s ease both;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; background: var(--orange);
+      border-radius: 50%; animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+    .hero-title {
+      font-family: var(--display); font-weight: 800;
+      font-size: clamp(64px, 9vw, 128px); line-height: 0.92;
+      letter-spacing: -0.04em; position: relative; z-index: 1;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+    .hero-title .line2 {
+      font-family: var(--serif); font-style: italic; font-weight: 400;
+      color: var(--orange); letter-spacing: -0.02em;
+    }
+    .hero-sub {
+      font-size: 18px; color: var(--muted); max-width: 520px;
+      line-height: 1.65; margin-top: 28px; font-weight: 400;
+      position: relative; z-index: 1; animation: fadeUp 0.8s 0.2s ease both;
+    }
+    .hero-actions {
+      display: flex; align-items: center; gap: 16px; margin-top: 40px;
+      position: relative; z-index: 1; animation: fadeUp 0.8s 0.3s ease both;
+    }
+    .btn-primary {
+      background: var(--orange); color: #fff; border: none;
+      padding: 14px 28px; border-radius: 8px;
+      font-family: var(--display); font-weight: 700; font-size: 15px;
+      cursor: none; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,90,0,0.4); }
+    .btn-ghost {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); padding: 14px 28px;
+      border-radius: 8px; font-family: var(--display);
+      font-weight: 500; font-size: 15px; cursor: none; text-decoration: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .hero-meta {
+      margin-top: 64px; display: flex; gap: 40px;
+      position: relative; z-index: 1; animation: fadeUp 0.8s 0.4s ease both;
+    }
+    .hero-stat { display: flex; flex-direction: column; gap: 4px; }
+    .hero-stat-num { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
+    .hero-stat-num span { color: var(--orange); }
+    .hero-stat-label { font-size: 12px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* Terminal */
+    .hero-terminal {
+      position: absolute; right: 40px; bottom: 80px; z-index: 1;
+      width: min(480px, 45vw); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+      animation: fadeUp 0.8s 0.5s ease both;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .terminal-bar {
+      background: var(--surface2); padding: 12px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-body { padding: 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; }
+    .t-dim { color: var(--muted); }
+    .t-orange { color: var(--orange); }
+    .t-green { color: #4ade80; }
+    .t-blue { color: #60a5fa; }
+    .t-white { color: var(--text); }
+    .t-cursor {
+      display: inline-block; width: 8px; height: 14px;
+      background: var(--orange); animation: blink 1s step-end infinite;
+      vertical-align: -2px; margin-left: 2px;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* SHARED SECTION */
+    .section { padding: 120px 40px; max-width: 1200px; margin: 0 auto; }
+    .section-tag {
+      font-family: var(--mono); font-size: 12px; color: var(--orange);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(36px, 5vw, 60px); font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.05; max-width: 700px;
+    }
+    .section-title em {
+      font-family: var(--serif); font-style: italic;
+      font-weight: 400; color: var(--orange);
+    }
+    .section-sub {
+      color: var(--muted); font-size: 17px; line-height: 1.65;
+      max-width: 540px; margin-top: 20px; font-weight: 400;
+    }
+
+    /* ICON HELPERS — all icons loaded from /static/icons/ */
+    .icon-wrap {
+      width: 44px; height: 44px;
+      background: var(--orange-glow);
+      border: 1px solid rgba(255,90,0,0.2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; transition: transform 0.3s; flex-shrink: 0;
+    }
+    .icon-wrap img {
+      width: 22px; height: 22px;
+      filter: invert(45%) sepia(90%) saturate(800%) hue-rotate(5deg) brightness(105%);
+    }
+    .feature-card:hover .icon-wrap { transform: scale(1.1); }
+
+    .icon-sm {
+      width: 40px; height: 40px; background: var(--surface2);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    }
+    .icon-sm img { width: 20px; height: 20px; filter: invert(1) opacity(0.6); }
+
+    .doc-icon {
+      width: 40px; height: 40px; background: var(--surface2);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .doc-icon img { width: 20px; height: 20px; filter: invert(1) opacity(0.7); }
+
+    /* FEATURES */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; margin-top: 64px;
+    }
+    .feature-card {
+      background: var(--black); padding: 40px;
+      transition: background 0.3s; position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--orange), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { background: var(--surface); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-name { font-size: 17px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.02em; }
+    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.65; font-weight: 400; }
+
+    /* HOW IT WORKS */
+    .how-section {
+      padding: 120px 40px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .how-inner { max-width: 1200px; margin: 0 auto; }
+    .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; margin-top: 80px; }
+    .step-list { display: flex; flex-direction: column; }
+    .step-item {
+      display: flex; gap: 24px; padding: 28px 0;
+      border-bottom: 1px solid var(--border); cursor: none;
+    }
+    .step-item:first-child { padding-top: 0; }
+    .step-item:last-child { border-bottom: none; }
+    .step-num { font-family: var(--mono); font-size: 12px; color: var(--orange); min-width: 28px; padding-top: 4px; font-weight: 500; }
+    .step-content h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .step-content p { font-size: 14px; color: var(--muted); line-height: 1.65; font-weight: 400; }
+    .step-visual {
+      background: var(--black); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px; aspect-ratio: 1;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      gap: 10px; position: relative; overflow: hidden;
+    }
+    .step-visual-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 60% 30%, rgba(255,90,0,0.08) 0%, transparent 70%);
+    }
+    .progress-row { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+    .progress-label { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress-bar-wrap { flex: 1; height: 4px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+    .progress-bar { height: 100%; background: var(--orange); border-radius: 100px; animation: growBar 2s ease both; }
+    @keyframes growBar { from { width: 0; } }
+    .progress-pct { font-family: var(--mono); font-size: 11px; color: var(--orange); min-width: 36px; text-align: right; }
+    .visual-title { font-family: var(--mono); font-size: 12px; color: var(--muted); position: absolute; top: 24px; left: 32px; z-index: 1; }
+    .visual-badge {
+      position: absolute; top: 20px; right: 24px;
+      background: var(--orange-glow); border: 1px solid rgba(255,90,0,0.3);
+      border-radius: 6px; padding: 4px 10px;
+      font-family: var(--mono); font-size: 11px; color: var(--orange); z-index: 1;
+    }
+
+    /* INTEGRATIONS */
+    .integrations-section { padding: 120px 40px; max-width: 1200px; margin: 0 auto; }
+    .integrations-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 64px; }
+    .integration-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px;
+      display: flex; flex-direction: column; gap: 12px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .integration-card:hover { border-color: rgba(255,90,0,0.3); transform: translateY(-3px); }
+    .integration-name { font-size: 15px; font-weight: 700; }
+    .integration-desc { font-size: 13px; color: var(--muted); line-height: 1.5; font-weight: 400; }
+    .integration-tag {
+      display: inline-flex; align-items: center;
+      background: var(--orange-glow); border: 1px solid rgba(255,90,0,0.2);
+      border-radius: 4px; padding: 2px 8px;
+      font-size: 11px; font-family: var(--mono); color: var(--orange); width: fit-content;
+    }
+
+    /* PRICING */
+    .pricing-section { padding: 120px 40px; background: var(--surface); border-top: 1px solid var(--border); }
+    .pricing-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 60px; text-align: left; }
+    .pricing-card {
+      background: var(--black); border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px; position: relative; transition: transform 0.2s;
+    }
+    .pricing-card:hover { transform: translateY(-4px); }
+    .pricing-card.featured {
+      border-color: var(--orange);
+      background: linear-gradient(135deg, rgba(255,90,0,0.05) 0%, transparent 60%), var(--black);
+    }
+    .featured-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--orange); color: #fff; font-size: 11px; font-weight: 700;
+      padding: 4px 14px; border-radius: 100px; font-family: var(--mono);
+      text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;
+    }
+    .pricing-tier { font-size: 13px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .pricing-price { font-size: 52px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; }
+    .pricing-price sup { font-size: 24px; vertical-align: top; margin-top: 10px; }
+    .pricing-price small { font-size: 16px; color: var(--muted); font-weight: 400; }
+    .pricing-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; font-weight: 400; }
+    .pricing-feats { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .pricing-feats li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--muted); font-weight: 400; }
+    .pricing-feats li::before { content: '✓'; color: var(--orange); font-weight: 700; flex-shrink: 0; }
+    .btn-pricing {
+      width: 100%; padding: 14px; border-radius: 8px;
+      font-family: var(--display); font-weight: 700; font-size: 15px;
+      cursor: none; text-align: center; display: block; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-pricing.solid { background: var(--orange); color: #fff; }
+    .btn-pricing.solid:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,90,0,0.35); }
+    .btn-pricing.outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-pricing.outline:hover { border-color: rgba(255,255,255,0.2); }
+
+    /* DOCS */
+    .docs-section { padding: 120px 40px; max-width: 1200px; margin: 0 auto; }
+    .docs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 64px; }
+    .doc-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px; text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .doc-card:hover { border-color: rgba(255,90,0,0.3); transform: translateY(-3px); }
+    .doc-card-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .doc-card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; font-weight: 400; }
+    .doc-card-link { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 12px; font-family: var(--mono); color: var(--orange); }
+
+    /* CTA */
+    .cta-section {
+      padding: 120px 40px; text-align: center;
+      background: var(--black); border-top: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(255,90,0,0.12) 0%, transparent 70%);
+    }
+    .cta-section .section-title { margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+    .cta-section .section-sub { margin: 20px auto 0; text-align: center; position: relative; z-index: 1; }
+    .cta-actions { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 40px; position: relative; z-index: 1; }
+    .cta-code {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 20px;
+      font-family: var(--mono); font-size: 14px; color: var(--text);
+      margin-top: 24px; position: relative; z-index: 1;
+    }
+    .cta-code .dollar { color: var(--orange); }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 48px 40px; background: var(--black); }
+    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; flex-wrap: wrap; }
+    .footer-brand { display: flex; flex-direction: column; gap: 12px; }
+    .footer-logo { font-family: var(--display); font-weight: 800; font-size: 18px; color: var(--text); letter-spacing: -0.5px; }
+    .footer-logo span { color: var(--orange); }
+    .footer-tagline { font-size: 13px; color: var(--muted); max-width: 220px; line-height: 1.5; font-weight: 400; }
+    .footer-cols { display: flex; gap: 60px; flex-wrap: wrap; }
+    .footer-col h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 16px; font-family: var(--mono); }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col a { font-size: 14px; color: var(--muted); text-decoration: none; transition: color 0.2s; font-weight: 400; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 32px auto 0; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .footer-copy { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 12px; color: var(--muted); text-decoration: none; font-family: var(--mono); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 20px 60px; }
+      .hero-terminal { display: none; }
+      .hero-meta { flex-wrap: wrap; gap: 24px; }
+      .section, .integrations-section, .docs-section { padding: 80px 20px; }
+      .how-section, .pricing-section, .cta-section { padding: 80px 20px; }
+      .features-grid, .integrations-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .step-visual { display: none; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .docs-grid { grid-template-columns: 1fr 1fr; }
+      footer { padding: 40px 20px; }
+      .footer-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">Zip<span>zap</span></a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#integrations">Integrations</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/docs">Docs</a></li>
+      <li><a href="#" class="nav-cta">Get started →</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Now with Dropbox sync &amp; WebP support
+    </div>
+
+    <h1 class="hero-title">
+      Compress fast.<br>
+      <span class="line2">Ship lighter.</span>
+    </h1>
+
+    <p class="hero-sub">
+      Batch image compression for local folders, ZIP archives, and Dropbox — without leaving your workflow.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#" class="btn-primary">Start compressing free →</a>
+      <a href="/docs" class="btn-ghost">Read the docs</a>
+    </div>
+
+    <div class="hero-meta">
+      <div class="hero-stat">
+        <div class="hero-stat-num">90<span>%</span></div>
+        <div class="hero-stat-label">Avg size reduction</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">10<span>k</span></div>
+        <div class="hero-stat-label">Images per batch</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">3<span>x</span></div>
+        <div class="hero-stat-label">Faster than manual</div>
+      </div>
+    </div>
+
+    <div class="hero-terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot" style="background:#ff5f57"></div>
+        <div class="terminal-dot" style="background:#febc2e"></div>
+        <div class="terminal-dot" style="background:#28c840"></div>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:8px;">zipzap compress ./assets</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-dim">$ zipzap compress ./marketing-assets --quality 80</div>
+        <br>
+        <div><span class="t-orange">→</span> <span class="t-white">Scanning folder...</span> <span class="t-green">247 images found</span></div>
+        <div><span class="t-orange">→</span> <span class="t-white">Format detection:</span> <span class="t-blue">jpg(184) png(51) gif(12)</span></div>
+        <div><span class="t-orange">→</span> <span class="t-white">Compressing with quality=80</span></div>
+        <br>
+        <div class="t-dim">━━━━━━━━━━━━━━━━━━━━━━ 247/247</div>
+        <br>
+        <div><span class="t-green">✓</span> <span class="t-white">Done in 4.2s</span></div>
+        <div><span class="t-green">✓</span> <span class="t-white">Saved</span> <span class="t-orange">187.4 MB</span> <span class="t-white">(82% smaller)</span></div>
+        <div><span class="t-green">✓</span> <span class="t-white">Output: ./marketing-assets.zip</span></div>
+        <br>
+        <div class="t-dim">$ <span class="t-cursor"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="reveal">
+      <div class="section-tag">/ Features</div>
+      <h2 class="section-title">Every image, <em>optimized<br>without compromise</em></h2>
+      <p class="section-sub">Zipzap handles the heavy lifting so you can focus on shipping — not optimizing.</p>
+    </div>
+
+    <div class="features-grid reveal">
+
+      <div class="feature-card">
+        <div class="icon-wrap">
+          <img src="/static/icons/batch.svg" alt="" aria-hidden="true">
+        </div>
+        <div class="feature-name">Batch Processing</div>
+        <div class="feature-desc">Compress entire folders in seconds. Process up to 10,000 images in a single run with parallel workers.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon-wrap">
+          <img src="/static/icons/archive.svg" alt="" aria-hidden="true">
+        </div>
+        <div class="feature-name">ZIP Archive Support</div>
+        <div class="feature-desc">Compress images directly inside ZIP files. No need to extract, process, and re-zip manually.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon-wrap">
+          <img src="/static/icons/cloud.svg" alt="" aria-hidden="true">
+        </div>
+        <div class="feature-name">Dropbox Sync</div>
+        <div class="feature-desc">Connect your Dropbox and compress cloud files without downloading them to your machine first.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon-wrap">
+          <img src="/static/icons/sliders.svg" alt="" aria-hidden="true">
+        </div>
+        <div class="feature-name">Quality Control</div>
+        <div class="feature-desc">Fine-tune compression quality per format. JPEG, PNG, WebP, AVIF — each optimized differently.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon-wrap">
+          <img src="/static/icons/eye.svg" alt="" aria-hidden="true">
+        </div>
+        <div class="feature-name">Visual Preview</div>
+        <div class="feature-desc">Side-by-side comparison before saving. See exactly what you're getting before committing.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="icon-wrap">
+          <img src="/static/icons/refresh.svg" alt="" aria-hidden="true">
+        </div>
+        <div class="feature-name">Watch Mode</div>
+        <div class="feature-desc">Set it and forget it. Zipzap watches folders and compresses new images automatically as they arrive.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-section" id="how">
+    <div class="how-inner">
+      <div class="reveal">
+        <div class="section-tag">/ How it works</div>
+        <h2 class="section-title">From folder to<br><em>optimized</em> in seconds</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step-list reveal">
+          <div class="step-item">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <h3>Point at your source</h3>
+              <p>Drop a folder path, ZIP file, or connect your Dropbox account. Zipzap scans and indexes every image it finds.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <h3>Configure your output</h3>
+              <p>Set quality thresholds, output format, and naming patterns. Use sensible defaults or go deep with per-format presets.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <h3>Compress &amp; ship</h3>
+              <p>Zipzap processes everything in parallel and spits out a clean ZIP or folder. Check the size report, then ship.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <h3>Automate &amp; repeat</h3>
+              <p>Hook into CI/CD with our CLI, set up watch mode, or call the API. Make compression part of your pipeline.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-visual reveal reveal-delay-2">
+          <div class="step-visual-bg"></div>
+          <div class="visual-title">Batch progress · 247 images</div>
+          <div class="visual-badge">Running</div>
+          <div class="progress-row">
+            <div class="progress-label">hero-banner.jpg</div>
+            <div class="progress-bar-wrap"><div class="progress-bar" style="width:95%"></div></div>
+            <div class="progress-pct">95%</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label">product-shot-01.png</div>
+            <div class="progress-bar-wrap"><div class="progress-bar" style="width:88%;animation-delay:0.1s"></div></div>
+            <div class="progress-pct">88%</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label">icon-set.png</div>
+            <div class="progress-bar-wrap"><div class="progress-bar" style="width:76%;animation-delay:0.2s"></div></div>
+            <div class="progress-pct">76%</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label">team-photo.jpg</div>
+            <div class="progress-bar-wrap"><div class="progress-bar" style="width:91%;animation-delay:0.3s"></div></div>
+            <div class="progress-pct">91%</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label">bg-pattern.webp</div>
+            <div class="progress-bar-wrap"><div class="progress-bar" style="width:83%;animation-delay:0.4s"></div></div>
+            <div class="progress-pct">83%</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-label">logo-dark.svg.png</div>
+            <div class="progress-bar-wrap"><div class="progress-bar" style="width:70%;animation-delay:0.5s"></div></div>
+            <div class="progress-pct">70%</div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">197 / 247 processed</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--orange);">−187.4 MB saved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTEGRATIONS -->
+  <section class="integrations-section" id="integrations">
+    <div class="reveal">
+      <div class="section-tag">/ Integrations</div>
+      <h2 class="section-title">Works where<br><em>you already work</em></h2>
+      <p class="section-sub">Native support for the tools in your stack — no wrappers, no workarounds.</p>
+    </div>
+
+    <div class="integrations-grid reveal">
+
+      <div class="integration-card">
+        <div class="icon-sm"><img src="/static/icons/folder.svg" alt="" aria-hidden="true"></div>
+        <div class="integration-name">Local Folders</div>
+        <div class="integration-desc">Point at any directory on your machine. Supports nested folders and recursive scanning.</div>
+        <div class="integration-tag">Built-in</div>
+      </div>
+
+      <div class="integration-card">
+        <div class="icon-sm"><img src="/static/icons/archive.svg" alt="" aria-hidden="true"></div>
+        <div class="integration-name">ZIP Archives</div>
+        <div class="integration-desc">Read and write images inside ZIP files directly without extracting first.</div>
+        <div class="integration-tag">Built-in</div>
+      </div>
+
+      <div class="integration-card">
+        <div class="icon-sm"><img src="/static/icons/cloud.svg" alt="" aria-hidden="true"></div>
+        <div class="integration-name">Dropbox</div>
+        <div class="integration-desc">OAuth-based Dropbox integration. Compress files in your Dropbox without downloading them.</div>
+        <div class="integration-tag">OAuth</div>
+      </div>
+
+      <div class="integration-card">
+        <div class="icon-sm"><img src="/static/icons/terminal.svg" alt="" aria-hidden="true"></div>
+        <div class="integration-name">CLI</div>
+        <div class="integration-desc">Full-featured command-line interface. Scriptable, pipeable, and CI-ready.</div>
+        <div class="integration-tag">pip install zipzap</div>
+      </div>
+
+      <div class="integration-card">
+        <div class="icon-sm"><img src="/static/icons/plug.svg" alt="" aria-hidden="true"></div>
+        <div class="integration-name">REST API</div>
+        <div class="integration-desc">Trigger compression jobs via HTTPS. Webhooks for completion events included.</div>
+        <div class="integration-tag">API key</div>
+      </div>
+
+      <div class="integration-card">
+        <div class="icon-sm"><img src="/static/icons/github.svg" alt="" aria-hidden="true"></div>
+        <div class="integration-name">GitHub Actions</div>
+        <div class="integration-desc">Official action to compress images on every push or PR. Keep your repo lean automatically.</div>
+        <div class="integration-tag">Coming soon</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing-section" id="pricing">
+    <div class="pricing-inner">
+      <div class="reveal">
+        <div class="section-tag" style="text-align:center">/ Pricing</div>
+        <h2 class="section-title" style="text-align:center;margin:0 auto">Simple, <em>honest</em> pricing</h2>
+        <p class="section-sub" style="text-align:center;margin:20px auto 0">No per-image fees. No storage limits. Just fast compression.</p>
+      </div>
+
+      <div class="pricing-grid reveal">
+        <div class="pricing-card">
+          <div class="pricing-tier">Hobby</div>
+          <div class="pricing-price"><sup>$</sup>0 <small>/ mo</small></div>
+          <div class="pricing-desc">Perfect for personal projects and small teams just getting started.</div>
+          <ul class="pricing-feats">
+            <li>500 images per month</li>
+            <li>Local folder compression</li>
+            <li>ZIP archive support</li>
+            <li>JPEG, PNG, WebP output</li>
+            <li>CLI access</li>
+          </ul>
+          <a href="#" class="btn-pricing outline">Get started free</a>
+        </div>
+
+        <div class="pricing-card featured">
+          <div class="featured-badge">Most popular</div>
+          <div class="pricing-tier">Pro</div>
+          <div class="pricing-price"><sup>$</sup>19 <small>/ mo</small></div>
+          <div class="pricing-desc">For teams shipping fast and needing unlimited compression at every step.</div>
+          <ul class="pricing-feats">
+            <li>Unlimited images</li>
+            <li>Dropbox integration</li>
+            <li>Watch mode &amp; automation</li>
+            <li>REST API access</li>
+            <li>Priority queue</li>
+            <li>AVIF + custom format output</li>
+          </ul>
+          <a href="#" class="btn-pricing solid">Start Pro trial →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DOCS -->
+  <section class="docs-section">
+    <div class="reveal">
+      <div class="section-tag">/ Documentation</div>
+      <h2 class="section-title">Start in <em>minutes</em></h2>
+      <p class="section-sub">Everything you need to go from install to production-optimized images.</p>
+    </div>
+
+    <div class="docs-grid reveal">
+
+      <a href="/docs/quickstart" class="doc-card">
+        <div class="doc-icon"><img src="/static/icons/rocket.svg" alt="" aria-hidden="true"></div>
+        <div class="doc-card-title">Quickstart</div>
+        <div class="doc-card-desc">Install Zipzap and compress your first folder in under 2 minutes.</div>
+        <div class="doc-card-link">Read guide →</div>
+      </a>
+
+      <a href="/docs/cli" class="doc-card">
+        <div class="doc-icon"><img src="/static/icons/terminal.svg" alt="" aria-hidden="true"></div>
+        <div class="doc-card-title">CLI Reference</div>
+        <div class="doc-card-desc">Full command reference with flags, examples, and exit codes.</div>
+        <div class="doc-card-link">Read guide →</div>
+      </a>
+
+      <a href="/docs/api" class="doc-card">
+        <div class="doc-icon"><img src="/static/icons/plug.svg" alt="" aria-hidden="true"></div>
+        <div class="doc-card-title">API Reference</div>
+        <div class="doc-card-desc">REST endpoints, authentication, webhooks and response schemas.</div>
+        <div class="doc-card-link">Read guide →</div>
+      </a>
+
+      <a href="/docs/dropbox" class="doc-card">
+        <div class="doc-icon"><img src="/static/icons/cloud.svg" alt="" aria-hidden="true"></div>
+        <div class="doc-card-title">Dropbox Setup</div>
+        <div class="doc-card-desc">Connect your Dropbox account and start compressing cloud files.</div>
+        <div class="doc-card-link">Read guide →</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2 class="section-title">Build in a weekend.<br><em>Ship lighter forever.</em></h2>
+    <p class="section-sub">Join thousands of developers and teams who trust Zipzap to keep their images lean.</p>
+    <div class="cta-actions">
+      <a href="#" class="btn-primary">Start for free →</a>
+      <a href="/docs" class="btn-ghost">Read the docs</a>
+    </div>
+    <div class="cta-code">
+      <span class="dollar">$</span> pip install zipzap
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">Zip<span>zap</span></div>
+        <div class="footer-tagline">Fast batch image compression for local folders, ZIP archives, and Dropbox.</div>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#">Features</a></li>
+            <li><a href="#">Pricing</a></li>
+            <li><a href="#">Changelog</a></li>
+            <li><a href="#">Roadmap</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Developers</h4>
+          <ul>
+            <li><a href="/docs">Documentation</a></li>
+            <li><a href="#">CLI Reference</a></li>
+            <li><a href="#">API</a></li>
+            <li><a href="#">GitHub</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Status</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 Zipzap. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top = my + 'px';
+    });
+    (function animate() {
+      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      requestAnimationFrame(animate);
+    })();
+    document.querySelectorAll('a, button, .feature-card, .integration-card, .doc-card, .step-item').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+        cursor.style.mixBlendMode = 'screen';
+        ring.style.transform = 'translate(-50%,-50%) scale(1.6)';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+        cursor.style.mixBlendMode = 'normal';
+        ring.style.transform = 'translate(-50%,-50%) scale(1)';
+      });
+    });
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
