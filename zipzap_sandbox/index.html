@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zipzap — Fast Batch Image Compression</title>
+  <link rel="icon" type="image/png" href="static/favicon.png?v=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <style>
@@ -208,7 +209,7 @@
       max-width: 540px; margin-top: 20px; font-weight: 400;
     }
 
-    /* ICON HELPERS — all icons loaded from /static/icons/ */
+    /* ICON HELPERS — all icons loaded from /static/*.png */
     .icon-wrap {
       width: 44px; height: 44px;
       background: var(--orange-glow);
@@ -227,14 +228,14 @@
       width: 40px; height: 40px; background: var(--surface2);
       border-radius: 10px; display: flex; align-items: center; justify-content: center;
     }
-    .icon-sm img { width: 20px; height: 20px; filter: invert(1) opacity(0.6); }
+    .icon-sm img { width: 20px; height: 20px; }
 
     .doc-icon {
       width: 40px; height: 40px; background: var(--surface2);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
       margin-bottom: 14px;
     }
-    .doc-icon img { width: 20px; height: 20px; filter: invert(1) opacity(0.7); }
+    .doc-icon img { width: 20px; height: 20px; }
 
     /* FEATURES */
     .features-grid {
@@ -446,7 +447,7 @@
       <li><a href="#how">How it works</a></li>
       <li><a href="#integrations">Integrations</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="/docs">Docs</a></li>
+      <li><a href="docs.html">Docs</a></li>
       <li><a href="#" class="nav-cta">Get started →</a></li>
     </ul>
   </nav>
@@ -472,12 +473,12 @@
 
     <div class="hero-actions">
       <a href="#" class="btn-primary">Start compressing free →</a>
-      <a href="/docs" class="btn-ghost">Read the docs</a>
+      <a href="docs.html" class="btn-ghost">Read the docs</a>
     </div>
 
     <div class="hero-meta">
       <div class="hero-stat">
-        <div class="hero-stat-num">90<span>%</span></div>
+        <div class="hero-stat-num">75<span>%</span></div>
         <div class="hero-stat-label">Avg size reduction</div>
       </div>
       <div class="hero-stat">
@@ -527,7 +528,7 @@
 
       <div class="feature-card">
         <div class="icon-wrap">
-          <img src="/static/icons/batch.svg" alt="" aria-hidden="true">
+          <img src="static/batch.png" alt="" aria-hidden="true">
         </div>
         <div class="feature-name">Batch Processing</div>
         <div class="feature-desc">Compress entire folders in seconds. Process up to 10,000 images in a single run with parallel workers.</div>
@@ -535,7 +536,7 @@
 
       <div class="feature-card">
         <div class="icon-wrap">
-          <img src="/static/icons/archive.svg" alt="" aria-hidden="true">
+          <img src="static/zip.png" alt="" aria-hidden="true">
         </div>
         <div class="feature-name">ZIP Archive Support</div>
         <div class="feature-desc">Compress images directly inside ZIP files. No need to extract, process, and re-zip manually.</div>
@@ -543,7 +544,7 @@
 
       <div class="feature-card">
         <div class="icon-wrap">
-          <img src="/static/icons/cloud.svg" alt="" aria-hidden="true">
+          <img src="static/dropbox.png" alt="" aria-hidden="true">
         </div>
         <div class="feature-name">Dropbox Sync</div>
         <div class="feature-desc">Connect your Dropbox and compress cloud files without downloading them to your machine first.</div>
@@ -551,7 +552,7 @@
 
       <div class="feature-card">
         <div class="icon-wrap">
-          <img src="/static/icons/sliders.svg" alt="" aria-hidden="true">
+          <img src="static/quality.png" alt="" aria-hidden="true">
         </div>
         <div class="feature-name">Quality Control</div>
         <div class="feature-desc">Fine-tune compression quality per format. JPEG, PNG, WebP, AVIF — each optimized differently.</div>
@@ -559,7 +560,7 @@
 
       <div class="feature-card">
         <div class="icon-wrap">
-          <img src="/static/icons/eye.svg" alt="" aria-hidden="true">
+          <img src="static/preview.png" alt="" aria-hidden="true">
         </div>
         <div class="feature-name">Visual Preview</div>
         <div class="feature-desc">Side-by-side comparison before saving. See exactly what you're getting before committing.</div>
@@ -567,7 +568,7 @@
 
       <div class="feature-card">
         <div class="icon-wrap">
-          <img src="/static/icons/refresh.svg" alt="" aria-hidden="true">
+          <img src="static/watch.png" alt="" aria-hidden="true">
         </div>
         <div class="feature-name">Watch Mode</div>
         <div class="feature-desc">Set it and forget it. Zipzap watches folders and compresses new images automatically as they arrive.</div>
@@ -670,42 +671,42 @@
     <div class="integrations-grid reveal">
 
       <div class="integration-card">
-        <div class="icon-sm"><img src="/static/icons/folder.svg" alt="" aria-hidden="true"></div>
+        <div class="icon-sm"><img src="static/folder.png" alt="" aria-hidden="true"></div>
         <div class="integration-name">Local Folders</div>
         <div class="integration-desc">Point at any directory on your machine. Supports nested folders and recursive scanning.</div>
         <div class="integration-tag">Built-in</div>
       </div>
 
       <div class="integration-card">
-        <div class="icon-sm"><img src="/static/icons/archive.svg" alt="" aria-hidden="true"></div>
+        <div class="icon-sm"><img src="static/zip.png" alt="" aria-hidden="true"></div>
         <div class="integration-name">ZIP Archives</div>
         <div class="integration-desc">Read and write images inside ZIP files directly without extracting first.</div>
         <div class="integration-tag">Built-in</div>
       </div>
 
       <div class="integration-card">
-        <div class="icon-sm"><img src="/static/icons/cloud.svg" alt="" aria-hidden="true"></div>
+        <div class="icon-sm"><img src="static/dropbox.png" alt="" aria-hidden="true"></div>
         <div class="integration-name">Dropbox</div>
         <div class="integration-desc">OAuth-based Dropbox integration. Compress files in your Dropbox without downloading them.</div>
         <div class="integration-tag">OAuth</div>
       </div>
 
       <div class="integration-card">
-        <div class="icon-sm"><img src="/static/icons/terminal.svg" alt="" aria-hidden="true"></div>
+        <div class="icon-sm"><img src="static/cli.png" alt="" aria-hidden="true"></div>
         <div class="integration-name">CLI</div>
         <div class="integration-desc">Full-featured command-line interface. Scriptable, pipeable, and CI-ready.</div>
         <div class="integration-tag">pip install zipzap</div>
       </div>
 
       <div class="integration-card">
-        <div class="icon-sm"><img src="/static/icons/plug.svg" alt="" aria-hidden="true"></div>
+        <div class="icon-sm"><img src="static/api.png" alt="" aria-hidden="true"></div>
         <div class="integration-name">REST API</div>
         <div class="integration-desc">Trigger compression jobs via HTTPS. Webhooks for completion events included.</div>
         <div class="integration-tag">API key</div>
       </div>
 
       <div class="integration-card">
-        <div class="icon-sm"><img src="/static/icons/github.svg" alt="" aria-hidden="true"></div>
+        <div class="icon-sm"><img src="static/actions.png" alt="" aria-hidden="true"></div>
         <div class="integration-name">GitHub Actions</div>
         <div class="integration-desc">Official action to compress images on every push or PR. Keep your repo lean automatically.</div>
         <div class="integration-tag">Coming soon</div>
@@ -741,7 +742,7 @@
         <div class="pricing-card featured">
           <div class="featured-badge">Most popular</div>
           <div class="pricing-tier">Pro</div>
-          <div class="pricing-price"><sup>$</sup>19 <small>/ mo</small></div>
+          <div class="pricing-price"><sup>$</sup>11<small>/ mo</small></div>
           <div class="pricing-desc">For teams shipping fast and needing unlimited compression at every step.</div>
           <ul class="pricing-feats">
             <li>Unlimited images</li>
@@ -767,29 +768,29 @@
 
     <div class="docs-grid reveal">
 
-      <a href="/docs/quickstart" class="doc-card">
-        <div class="doc-icon"><img src="/static/icons/rocket.svg" alt="" aria-hidden="true"></div>
+      <a href="docs.html#quickstart" class="doc-card">
+        <div class="doc-icon"><img src="static/book.png" alt="" aria-hidden="true"></div>
         <div class="doc-card-title">Quickstart</div>
         <div class="doc-card-desc">Install Zipzap and compress your first folder in under 2 minutes.</div>
         <div class="doc-card-link">Read guide →</div>
       </a>
 
-      <a href="/docs/cli" class="doc-card">
-        <div class="doc-icon"><img src="/static/icons/terminal.svg" alt="" aria-hidden="true"></div>
+      <a href="docs.html#cli" class="doc-card">
+        <div class="doc-icon"><img src="static/cli.png" alt="" aria-hidden="true"></div>
         <div class="doc-card-title">CLI Reference</div>
         <div class="doc-card-desc">Full command reference with flags, examples, and exit codes.</div>
         <div class="doc-card-link">Read guide →</div>
       </a>
 
-      <a href="/docs/api" class="doc-card">
-        <div class="doc-icon"><img src="/static/icons/plug.svg" alt="" aria-hidden="true"></div>
+      <a href="docs.html#api" class="doc-card">
+        <div class="doc-icon"><img src="static/api.png" alt="" aria-hidden="true"></div>
         <div class="doc-card-title">API Reference</div>
         <div class="doc-card-desc">REST endpoints, authentication, webhooks and response schemas.</div>
         <div class="doc-card-link">Read guide →</div>
       </a>
 
-      <a href="/docs/dropbox" class="doc-card">
-        <div class="doc-icon"><img src="/static/icons/cloud.svg" alt="" aria-hidden="true"></div>
+      <a href="docs.html#dropbox" class="doc-card">
+        <div class="doc-icon"><img src="static/dropbox.png" alt="" aria-hidden="true"></div>
         <div class="doc-card-title">Dropbox Setup</div>
         <div class="doc-card-desc">Connect your Dropbox account and start compressing cloud files.</div>
         <div class="doc-card-link">Read guide →</div>
@@ -804,7 +805,7 @@
     <p class="section-sub">Join thousands of developers and teams who trust Zipzap to keep their images lean.</p>
     <div class="cta-actions">
       <a href="#" class="btn-primary">Start for free →</a>
-      <a href="/docs" class="btn-ghost">Read the docs</a>
+      <a href="docs.html" class="btn-ghost">Read the docs</a>
     </div>
     <div class="cta-code">
       <span class="dollar">$</span> pip install zipzap
@@ -831,7 +832,7 @@
         <div class="footer-col">
           <h4>Developers</h4>
           <ul>
-            <li><a href="/docs">Documentation</a></li>
+            <li><a href="docs.html">Documentation</a></li>
             <li><a href="#">CLI Reference</a></li>
             <li><a href="#">API</a></li>
             <li><a href="#">GitHub</a></li>

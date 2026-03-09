@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zipzap Docs — Fast Batch Image Compression</title>
+  <link rel="icon" type="image/png" href="static/favicon.png?v=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <style>
@@ -208,20 +209,7 @@
       scroll-margin-top: 96px;
     }
     .doc-section-header {
-      display: flex; align-items: center; gap: 14px;
       margin-bottom: 24px;
-    }
-    .doc-section-icon {
-      width: 36px; height: 36px;
-      background: var(--orange-glow);
-      border: 1px solid rgba(255,90,0,0.2);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .doc-section-icon img {
-      width: 18px; height: 18px;
-      filter: invert(45%) sepia(90%) saturate(800%) hue-rotate(5deg) brightness(105%);
     }
     h2.doc-h2 {
       font-family: var(--display); font-weight: 800;
@@ -399,16 +387,16 @@
   <!-- NAV -->
   <nav>
     <div class="nav-left">
-      <a href="{{ url_for('index') }}" class="nav-logo">Zip<span>zap</span></a>
+      <a href="index.html" class="nav-logo">Zip<span>zap</span></a>
       <div class="nav-divider"></div>
       <span class="nav-section-label">Docs</span>
     </div>
     <ul class="nav-links">
-      <li><a href="{{ url_for('index') }}">Home</a></li>
+      <li><a href="index.html">Home</a></li>
       <li><a href="#quickstart">Quickstart</a></li>
       <li><a href="#cli">CLI</a></li>
       <li><a href="#api">API</a></li>
-      <li><a href="{{ url_for('index') }}#pricing" class="nav-cta">Get started →</a></li>
+      <li><a href="index.html#pricing" class="nav-cta">Get started →</a></li>
     </ul>
   </nav>
 
@@ -422,19 +410,16 @@
         <ul class="sidebar-links">
           <li>
             <a href="#quickstart" class="active">
-              <img src="/static/icons/rocket.svg" class="sidebar-icon" alt="">
               Quickstart
             </a>
           </li>
           <li>
             <a href="#prerequisite">
-              <img src="/static/icons/key.svg" class="sidebar-icon" alt="">
               Prerequisite
             </a>
           </li>
           <li>
             <a href="#install">
-              <img src="/static/icons/terminal.svg" class="sidebar-icon" alt="">
               Installation
             </a>
           </li>
@@ -446,19 +431,16 @@
         <ul class="sidebar-links">
           <li>
             <a href="#cli">
-              <img src="/static/icons/terminal.svg" class="sidebar-icon" alt="">
               CLI Reference
             </a>
           </li>
           <li>
             <a href="#api">
-              <img src="/static/icons/plug.svg" class="sidebar-icon" alt="">
               API Reference
             </a>
           </li>
           <li>
             <a href="#python-usage">
-              <img src="/static/icons/code.svg" class="sidebar-icon" alt="">
               Python Usage
             </a>
           </li>
@@ -470,13 +452,11 @@
         <ul class="sidebar-links">
           <li>
             <a href="#dropbox">
-              <img src="/static/icons/cloud.svg" class="sidebar-icon" alt="">
               Dropbox Setup
             </a>
           </li>
           <li>
             <a href="#notes">
-              <img src="/static/icons/info.svg" class="sidebar-icon" alt="">
               Notes &amp; Tips
             </a>
           </li>
@@ -492,7 +472,7 @@
         <!-- PAGE HEADER -->
         <div class="docs-header">
           <div class="docs-breadcrumb">
-            <a href="{{ url_for('index') }}">Home</a>
+            <a href="index.html">Home</a>
             <span>/</span>
             <span style="color:var(--text)">Documentation</span>
           </div>
@@ -506,9 +486,6 @@
         <!-- ── QUICKSTART ── -->
         <section class="doc-section" id="quickstart">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/rocket.svg" alt="">
-            </div>
             <h2 class="doc-h2">Quickstart</h2>
           </div>
 
@@ -554,9 +531,6 @@ zipzap compress ./my-images</pre>
         <!-- ── PREREQUISITE ── -->
         <section class="doc-section" id="prerequisite">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/key.svg" alt="">
-            </div>
             <h2 class="doc-h2">Prerequisite</h2>
           </div>
 
@@ -578,7 +552,7 @@ zipzap compress ./my-images</pre>
           </div>
 
           <div class="callout">
-            <div class="callout-icon"><img src="/static/icons/info.svg" alt=""></div>
+            <div class="callout-icon"></div>
             <p><strong>Never commit your <code>.env</code> file.</strong> Add it to <code>.gitignore</code> before your first commit to avoid leaking credentials.</p>
           </div>
         </section>
@@ -588,9 +562,6 @@ zipzap compress ./my-images</pre>
         <!-- ── INSTALL ── -->
         <section class="doc-section" id="install">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/terminal.svg" alt="">
-            </div>
             <h2 class="doc-h2">Installation</h2>
           </div>
 
@@ -630,9 +601,6 @@ zipzap compress ./my-images</pre>
         <!-- ── CLI REFERENCE ── -->
         <section class="doc-section" id="cli">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/terminal.svg" alt="">
-            </div>
             <h2 class="doc-h2">CLI Reference</h2>
           </div>
 
@@ -729,9 +697,6 @@ zipzap compress ./my-images</pre>
         <!-- ── API REFERENCE ── -->
         <section class="doc-section" id="api">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/plug.svg" alt="">
-            </div>
             <h2 class="doc-h2">API Reference</h2>
           </div>
 
@@ -829,9 +794,6 @@ batch_compress_dropbox(
         <!-- ── PYTHON USAGE ── -->
         <section class="doc-section" id="python-usage">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/code.svg" alt="">
-            </div>
             <h2 class="doc-h2">Python Usage</h2>
           </div>
 
@@ -880,9 +842,6 @@ batch_compress_dropbox(dbx)</pre>
         <!-- ── DROPBOX SETUP ── -->
         <section class="doc-section" id="dropbox">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/cloud.svg" alt="">
-            </div>
             <h2 class="doc-h2">Dropbox Setup</h2>
           </div>
 
@@ -923,7 +882,7 @@ batch_compress_dropbox(dbx)</pre>
           </ol>
 
           <div class="callout">
-            <div class="callout-icon"><img src="/static/icons/info.svg" alt=""></div>
+            <div class="callout-icon"></div>
             <p><strong>Token expiry:</strong> Short-lived tokens expire after 4 hours. For long-running automation, generate an <strong>offline refresh token</strong> instead via the OAuth2 flow in the Dropbox developer console.</p>
           </div>
 
@@ -952,9 +911,6 @@ batch_compress_dropbox(
         <!-- ── NOTES & TIPS ── -->
         <section class="doc-section" id="notes">
           <div class="doc-section-header">
-            <div class="doc-section-icon">
-              <img src="/static/icons/info.svg" alt="">
-            </div>
             <h2 class="doc-h2">Notes &amp; Tips</h2>
           </div>
 
@@ -970,7 +926,7 @@ batch_compress_dropbox(
 
         <!-- PREV / NEXT NAV -->
         <div class="doc-nav-footer">
-          <a href="{{ url_for('index') }}" class="doc-nav-card">
+          <a href="index.html" class="doc-nav-card">
             <div class="doc-nav-label">← Previous</div>
             <div class="doc-nav-title">Home</div>
           </a>
